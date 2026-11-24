@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       bodyProfile,
       compareProfile,
       questionType = 'fit_analysis',
+      model = 'gemini-3.8-flash',
     } = body;
 
     // API 키 확인: 1) 클라이언트 헤더 -> 2) Body -> 3) 서버 환경변수
@@ -57,11 +58,17 @@ export async function POST(request: NextRequest) {
       questionType,
     });
 
-    // 지원 모델 우선순위: gemini-3.8-flash -> gemini-2.5-flash -> gemini-1.5-flash
-    const candidateModels = [
+    // 사용자가 선택한 모델을 최우선으로 배치하고 fallback 체인 구성
+    const requestedModel = (model || 'gemini-3.8-flash').trim();
+    const fallbackList = [
       'gemini-3.8-flash',
+      'gemini-3.5-flash-lite',
       'gemini-2.5-flash',
       'gemini-1.5-flash',
+    ];
+    const candidateModels = [
+      requestedModel,
+      ...fallbackList.filter((m) => m !== requestedModel),
     ];
 
     let lastError = '';

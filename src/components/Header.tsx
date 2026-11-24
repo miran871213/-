@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenApiKeyModal }) => {
               <h1 className="text-lg font-bold text-gray-900 tracking-tight">핏체크 5kg</h1>
               <span className="text-[11px] font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-500" />
-                Gemini 3.8 Flash
+                Gemini 3.8 / 3.5
               </span>
             </div>
             <p className="text-xs text-gray-500 hidden sm:block">

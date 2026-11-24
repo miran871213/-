@@ -6,10 +6,28 @@ import { KeyRound, X, ExternalLink, Check, Trash2, Eye, EyeOff, Sparkles, Shield
 interface ApiKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApiKeySaved?: (apiKey: string) => void;
+  onApiKeySaved?: (apiKey: string, model: string) => void;
 }
 
 export const GEMINI_API_KEY_STORAGE_KEY = 'gemini_api_key';
+export const GEMINI_MODEL_STORAGE_KEY = 'gemini_selected_model';
+
+export const GEMINI_AVAILABLE_MODELS = [
+  {
+    id: 'gemini-3.8-flash',
+    name: 'Gemini 3.8 Flash',
+    badge: '정밀 추천',
+    desc: '의류 실루엣과 신체 치수를 정밀 분석하여 디테일한 핏 리포트 제공',
+  },
+  {
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite',
+    badge: '초고속 라이트',
+    desc: '빠른 응답 속도와 가벼운 리소스로 핵심 추천 사이즈와 코디 팁 제공',
+  },
+] as const;
+
+export type GeminiModelId = (typeof GEMINI_AVAILABLE_MODELS)[number]['id'];
 
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   isOpen,
@@ -17,13 +35,16 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   onApiKeySaved,
 }) => {
   const [apiKey, setApiKey] = useState('');
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.8-flash');
   const [showKey, setShowKey] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (isOpen && typeof window !== 'undefined') {
-      const stored = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY) || '';
-      setApiKey(stored);
+      const storedKey = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY) || '';
+      const storedModel = localStorage.getItem(GEMINI_MODEL_STORAGE_KEY) || 'gemini-3.8-flash';
+      setApiKey(storedKey);
+      setSelectedModel(storedModel);
       setIsSaved(false);
     }
   }, [isOpen]);
@@ -39,9 +60,11 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, trimmed);
+      localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, selectedModel);
+      window.dispatchEvent(new Event('storage'));
     }
     setIsSaved(true);
-    if (onApiKeySaved) onApiKeySaved(trimmed);
+    if (onApiKeySaved) onApiKeySaved(trimmed, selectedModel);
 
     setTimeout(() => {
       setIsSaved(false);
@@ -70,9 +93,9 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
-                Gemini 3.8 Flash API 키 설정
+                Gemini AI 모델 & API 키 설정
               </h3>
-              <p className="text-xs text-gray-500">사용자 개인 API 키로 AI 핏 분석 기능 사용</p>
+              <p className="text-xs text-gray-500">원하는 모델을 선택하고 개인 API 키로 분석하세요</p>
             </div>
           </div>
           <button
@@ -86,14 +109,57 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
         {/* 바디 */}
         <div className="p-5 space-y-4">
-          <div className="p-3.5 bg-violet-50/60 border border-violet-200/80 rounded-xl text-xs text-violet-900 leading-relaxed space-y-1">
+          {/* AI 모델 선택 영역 */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+              사용할 Gemini AI 모델 선택
+            </label>
+            <div className="space-y-2">
+              {GEMINI_AVAILABLE_MODELS.map((m) => {
+                const isSelected = selectedModel === m.id;
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => setSelectedModel(m.id)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${isSelected
+                        ? 'border-violet-600 bg-violet-50/70 shadow-sm'
+                        : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100/60'
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="gemini_model"
+                      checked={isSelected}
+                      onChange={() => setSelectedModel(m.id)}
+                      className="mt-0.5 accent-violet-600 shrink-0 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-900">{m.name}</span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected
+                              ? 'bg-violet-600 text-white'
+                              : 'bg-gray-200 text-gray-700'
+                            }`}
+                        >
+                          {m.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{m.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="p-3 bg-violet-50/60 border border-violet-200/80 rounded-xl text-xs text-violet-900 leading-relaxed space-y-1">
             <div className="flex items-center gap-1.5 font-bold text-violet-800">
               <ShieldCheck className="w-4 h-4 text-violet-600" />
               <span>보안 안내</span>
             </div>
-            <p className="text-violet-700">
-              입력하신 API 키는 서버에 영구 저장되지 않으며, 사용자 브라우저의 로컬 스토리지에만
-              안전하게 보관되어 AI 요청 시에만 사용됩니다.
+            <p className="text-violet-700 text-[11px]">
+              입력하신 API 키는 브라우저 로컬 스토리지에만 저장되며, AI 요청 시에만 안전하게 사용됩니다.
             </p>
           </div>
 
@@ -160,9 +226,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             <button
               type="button"
               onClick={handleSave}
-              className={`px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5 ${
-                isSaved ? 'bg-emerald-600' : 'bg-violet-600 hover:bg-violet-700'
-              }`}
+              className={`px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5 ${isSaved ? 'bg-emerald-600' : 'bg-violet-600 hover:bg-violet-700'
+                }`}
             >
               {isSaved ? (
                 <>

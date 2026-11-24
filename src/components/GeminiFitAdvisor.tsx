@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { GarmentData, Gender } from '@/types';
 import { getBaseModel } from '@/constants/models';
-import { GEMINI_API_KEY_STORAGE_KEY } from './ApiKeyModal';
+import {
+  GEMINI_API_KEY_STORAGE_KEY,
+  GEMINI_MODEL_STORAGE_KEY,
+  GEMINI_AVAILABLE_MODELS,
+} from './ApiKeyModal';
 import {
   Sparkles,
   Bot,
@@ -39,24 +43,39 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
 }) => {
   const [selectedType, setSelectedType] = useState<QuestionType>('fit_analysis');
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.8-flash');
   const [isLoading, setIsLoading] = useState(false);
   const [analysisText, setAnalysisText] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [modelUsed, setModelUsed] = useState<string>('gemini-3.8-flash');
 
-  // 로컬 스토리지 API 키 감지
+  // 로컬 스토리지 API 키 및 선택된 모델 감지
   useEffect(() => {
-    const checkKey = () => {
+    const checkSettings = () => {
       if (typeof window !== 'undefined') {
         const key = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+        const storedModel = localStorage.getItem(GEMINI_MODEL_STORAGE_KEY);
         setHasApiKey(!!key?.trim());
+        if (storedModel) {
+          setSelectedModel(storedModel);
+          setModelUsed(storedModel);
+        }
       }
     };
-    checkKey();
-    window.addEventListener('storage', checkKey);
-    return () => window.removeEventListener('storage', checkKey);
+    checkSettings();
+    window.addEventListener('storage', checkSettings);
+    return () => window.removeEventListener('storage', checkSettings);
   }, []);
+
+  const handleModelChange = (newModel: string) => {
+    setSelectedModel(newModel);
+    setModelUsed(newModel);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, newModel);
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
 
   // 의류 또는 몸무게가 변경되면 분석 초기화
   useEffect(() => {
@@ -111,14 +130,15 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
           },
           compareProfile: compModel
             ? {
-                gender,
-                height,
-                weight: compareWeight!,
-                bmi: compModel.bmi,
-                bodyType: compModel.bodyType,
-              }
+              gender,
+              height,
+              weight: compareWeight!,
+              bmi: compModel.bmi,
+              bodyType: compModel.bodyType,
+            }
             : undefined,
           questionType: typeToRun,
+          model: selectedModel,
         }),
       });
 
@@ -160,16 +180,16 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4 sm:p-6 transition-all">
-      {/* 타이틀 및 API 키 상태 바 */}
+      {/* 타이틀 및 API 키 / 모델 선택 상태 바 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-violet-600 flex items-center justify-center text-white shadow-sm">
             <Sparkles className="w-5 h-5 text-amber-200" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-base font-bold text-gray-900">
-                Gemini 3.8 Flash AI 핏 & 사이즈 어드바이저
+                Gemini AI 핏 & 사이즈 어드바이저
               </h3>
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
                 {modelUsed}
@@ -181,19 +201,45 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
           </div>
         </div>
 
-        {/* API 키 설정 버튼 */}
-        <button
-          type="button"
-          onClick={onOpenApiKeyModal}
-          className={`self-start sm:self-auto px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-            hasApiKey
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-              : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
-          }`}
-        >
-          <KeyRound className="w-3.5 h-3.5" />
-          <span>{hasApiKey ? 'Gemini API 키 연결됨' : 'Gemini API 키 입력하기'}</span>
-        </button>
+        {/* 상단 컨트롤: 모델 토글 & API 키 버튼 */}
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+          {/* 모델 직접 선택 탭 */}
+          <div className="flex items-center p-0.5 bg-gray-100 border border-gray-200 rounded-xl">
+            <button
+              type="button"
+              onClick={() => handleModelChange('gemini-3.8-flash')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${selectedModel === 'gemini-3.8-flash'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800'
+                }`}
+            >
+              3.8 Flash (정밀)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleModelChange('gemini-3.5-flash-lite')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${selectedModel === 'gemini-3.5-flash-lite'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800'
+                }`}
+            >
+              3.5 Flash Lite (초고속)
+            </button>
+          </div>
+
+          {/* API 키 설정 버튼 */}
+          <button
+            type="button"
+            onClick={onOpenApiKeyModal}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${hasApiKey
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
+              }`}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>{hasApiKey ? 'API 키 등록됨' : 'API 키 입력'}</span>
+          </button>
+        </div>
       </div>
 
       {/* 분석 카테고리 탭 선택 */}
@@ -210,11 +256,10 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
                 runGeminiAnalysis(tab.type);
               }}
               disabled={isLoading || !garment}
-              className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                isSelected
+              className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${isSelected
                   ? 'bg-violet-600 text-white shadow-sm'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50'
-              }`}
+                }`}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
@@ -249,7 +294,7 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
         <div className="py-8 text-center text-gray-600 space-y-3">
           <Loader2 className="w-7 h-7 text-violet-600 animate-spin mx-auto" />
           <p className="text-xs sm:text-sm font-semibold text-gray-800">
-            Gemini 3.8 Flash가 {weight}kg 체형과 의류 스펙을 정밀 진단 중입니다...
+            {selectedModel === 'gemini-3.5-flash-lite' ? 'Gemini 3.5 Flash Lite' : 'Gemini 3.8 Flash'}가 {weight}kg 체형과 의류 스펙을 분석 중입니다...
           </p>
           <p className="text-[11px] text-gray-400">
             신장 {height}cm · BMI {currentModel.bmi} · {currentModel.bodyType} 기준 분석
@@ -322,7 +367,7 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
             className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-300 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm inline-flex items-center gap-2 transition-all"
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>{currentModel.weight}kg 맞춤 Gemini 3.8 Flash 분석 시작하기</span>
+            <span>{currentModel.weight}kg 맞춤 {selectedModel === 'gemini-3.5-flash-lite' ? 'Gemini 3.5 Flash Lite' : 'Gemini 3.8 Flash'} 분석 시작하기</span>
           </button>
         </div>
       )}

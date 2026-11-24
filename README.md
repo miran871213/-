@@ -93,6 +93,11 @@ npm run dev
    - **비교 모드 (Side-by-side):** 55kg vs 60kg 등 두 가지 체형 착용 이미지를 나란히 비교
    - 합성 결과 이미지 다운로드 및 링크 공유 지원
 
+4. **Gemini 3.8 Flash & 3.5 Flash Lite AI 핏 어드바이저**:
+   - **사용자 모델 선택:** `gemini-3.8-flash`(정밀 분석)와 `gemini-3.5-flash-lite`(초고속 라이트) 중 자유롭게 선택
+   - **사용자 개인 API 키:** Google AI Studio 무료 키를 브라우저에 직접 등록하여 사용
+   - 핏 정밀 진단, 권장 사이즈(S/M/L/XL), 체형 보정 코디 팁, 두 체형 대조 리포트 제공
+
 ---
 
 ## 🌐 Netlify 배포 가이드
