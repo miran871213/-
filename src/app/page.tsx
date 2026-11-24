@@ -6,6 +6,8 @@ import { UrlInputForm } from '@/components/UrlInputForm';
 import { WeightSelector } from '@/components/WeightSelector';
 import { TryOnViewer } from '@/components/TryOnViewer';
 import { CompareModal } from '@/components/CompareModal';
+import { GeminiFitAdvisor } from '@/components/GeminiFitAdvisor';
+import { ApiKeyModal } from '@/components/ApiKeyModal';
 import { GarmentData, Gender, TryOnResponse } from '@/types';
 import { getBaseModel } from '@/constants/models';
 import { Sparkles, ArrowDown, HelpCircle, CheckCircle2 } from 'lucide-react';
@@ -30,6 +32,9 @@ export default function HomePage() {
 
   // 5. 비교 모드 모달 상태
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+
+  // 6. Gemini API 키 입력 모달 상태
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   // 캐시된 몸무게 목록
   const cachedWeightList = useMemo(() => {
@@ -122,7 +127,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
       {/* 글로벌 헤더 */}
-      <Header />
+      <Header onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)} />
 
       {/* 메인 컨테이너 */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 sm:py-8 space-y-6">
@@ -242,6 +247,20 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Gemini 3.8 Flash AI 체형별 핏 & 사이즈 어드바이저 */}
+        {selectedGarment && (
+          <div className="space-y-2 pt-2 animate-fade-in">
+            <GeminiFitAdvisor
+              garment={selectedGarment}
+              gender={gender}
+              height={height}
+              weight={selectedWeight}
+              compareWeight={isCompareOpen ? (selectedWeight <= 90 ? selectedWeight + 5 : selectedWeight - 5) : undefined}
+              onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
+            />
+          </div>
+        )}
+
         {/* 2가지 몸무게 나란히 비교 모달 */}
         {selectedGarment && (
           <CompareModal
@@ -257,6 +276,12 @@ export default function HomePage() {
             }}
           />
         )}
+
+        {/* Gemini API 키 입력 모달 */}
+        <ApiKeyModal
+          isOpen={isApiKeyModalOpen}
+          onClose={() => setIsApiKeyModalOpen(false)}
+        />
 
         {/* 사용 안내 가이드 카드 */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5 text-xs text-gray-600 space-y-2">
