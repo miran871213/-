@@ -51,15 +51,24 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleSelectModel = (modelId: string) => {
+    setSelectedModel(modelId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, modelId);
+      window.dispatchEvent(new Event('storage'));
+    }
+    if (onApiKeySaved) {
+      onApiKeySaved(apiKey.trim(), modelId);
+    }
+  };
+
   const handleSave = () => {
     const trimmed = apiKey.trim();
-    if (!trimmed) {
-      alert('유효한 Gemini API 키를 입력해 주세요.');
-      return;
-    }
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, trimmed);
+      if (trimmed) {
+        localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, trimmed);
+      }
       localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, selectedModel);
       window.dispatchEvent(new Event('storage'));
     }
@@ -69,7 +78,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
     setTimeout(() => {
       setIsSaved(false);
       onClose();
-    }, 1000);
+    }, 800);
   };
 
   const handleDelete = () => {
@@ -120,7 +129,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                 return (
                   <div
                     key={m.id}
-                    onClick={() => setSelectedModel(m.id)}
+                    onClick={() => handleSelectModel(m.id)}
                     className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${isSelected
                         ? 'border-violet-600 bg-violet-50/70 shadow-sm'
                         : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100/60'
@@ -130,7 +139,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                       type="radio"
                       name="gemini_model"
                       checked={isSelected}
-                      onChange={() => setSelectedModel(m.id)}
+                      onChange={() => handleSelectModel(m.id)}
                       className="mt-0.5 accent-violet-600 shrink-0 cursor-pointer"
                     />
                     <div className="flex-1">

@@ -247,19 +247,17 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Gemini 3.8 Flash AI 체형별 핏 & 사이즈 어드바이저 */}
-        {selectedGarment && (
-          <div className="space-y-2 pt-2 animate-fade-in">
-            <GeminiFitAdvisor
-              garment={selectedGarment}
-              gender={gender}
-              height={height}
-              weight={selectedWeight}
-              compareWeight={isCompareOpen ? (selectedWeight <= 90 ? selectedWeight + 5 : selectedWeight - 5) : undefined}
-              onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-            />
-          </div>
-        )}
+        {/* Gemini AI 체형별 핏 & 사이즈 어드바이저 (상시 노출) */}
+        <div className="space-y-2 pt-2 animate-fade-in">
+          <GeminiFitAdvisor
+            garment={selectedGarment}
+            gender={gender}
+            height={height}
+            weight={selectedWeight}
+            compareWeight={isCompareOpen ? (selectedWeight <= 90 ? selectedWeight + 5 : selectedWeight - 5) : undefined}
+            onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
+          />
+        </div>
 
         {/* 2가지 몸무게 나란히 비교 모달 */}
         {selectedGarment && (

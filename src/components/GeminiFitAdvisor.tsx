@@ -276,7 +276,7 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
             사용자 개인 Gemini API 키로 무제한 핏 분석을 받아보세요!
           </h4>
           <p className="text-xs text-gray-600 mt-1 max-w-md mx-auto">
-            Google AI Studio에서 무료로 발급받은 API 키를 등록하면, Gemini 3.8 Flash가 체형에 맞는 실시간 맞춤 핏 리포트를 제공합니다.
+            Google AI Studio에서 무료로 발급받은 API 키를 등록하면, {selectedModel === 'gemini-3.5-flash-lite' ? 'Gemini 3.5 Flash Lite' : 'Gemini 3.8 Flash'}가 체형에 맞는 실시간 맞춤 핏 리포트를 제공합니다.
           </p>
           <button
             type="button"
@@ -369,6 +369,11 @@ export const GeminiFitAdvisor: React.FC<GeminiFitAdvisorProps> = ({
             <Sparkles className="w-4 h-4 text-amber-300" />
             <span>{currentModel.weight}kg 맞춤 {selectedModel === 'gemini-3.5-flash-lite' ? 'Gemini 3.5 Flash Lite' : 'Gemini 3.8 Flash'} 분석 시작하기</span>
           </button>
+          {!garment && (
+            <p className="text-[11px] text-gray-400 mt-2">
+              💡 1단계에서 쇼핑몰 URL을 넣거나 데모 옷을 선택하시면 바로 {selectedModel === 'gemini-3.5-flash-lite' ? 'Gemini 3.5 Flash Lite' : 'Gemini 3.8 Flash'}로 분석을 시작할 수 있습니다.
+            </p>
+          )}
         </div>
       )}
     </div>
